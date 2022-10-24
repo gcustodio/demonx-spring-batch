@@ -8,19 +8,19 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public class PaymentsWriter implements ItemWriter<Payment> {
 
-    @Autowired
+
     private PaymentRepository paymentRepository;
 
-   /* public PaymentsWriter(PaymentRepository paymentRepository) {
+    @Autowired
+    public PaymentsWriter(PaymentRepository paymentRepository) {
         this.paymentRepository = paymentRepository;
     }
-*/
+
     @Override
     public void write(List<? extends Payment> payments) throws Exception {
-
-
         paymentRepository.saveAll(payments);
     }
 }

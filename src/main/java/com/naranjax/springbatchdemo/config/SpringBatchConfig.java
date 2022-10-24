@@ -15,52 +15,79 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import javax.annotation.Resource;
+import javax.sql.DataSource;
 import java.util.List;
 
 @Configuration
 @EnableBatchProcessing
 public class SpringBatchConfig {
-    @Autowired
-    private PaymentRepository paymentRepository;
+
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
-    private PaymentsReader reader;
-    @Autowired
-    private PaymentsProcessor processor;
+    @Bean
+    public PaymentsReader reader(){
+        return new PaymentsReader();
+    }
 
-    private PaymentsWriter writer;
+    /*
+    @Bean
+    public PaymentsWriter writer() {
+        return new PaymentsWriter();
+    }
 
+     */
+
+    @Autowired private PaymentsWriter writer;
+
+    @Bean
+    public PaymentsProcessor processor() {
+        return new PaymentsProcessor();
+    }
+
+    /*
+    @Bean
+    @Primary
+    @ConfigurationProperties(prefix="spring.datasource")
+    public DataSource datasource() {
+        return DataSourceBuilder.create().build();
+    }
+
+     */
+/*
     @Autowired
     private PaymentsStepListener listener;
-
+*/
     @Bean
     public Job jobNx(JobBuilderFactory jobBuilderFactory){
 
-        Step step = stepBuilderFactory.get("ETL-file-load")
-                .<PaymentCsv, Payment>chunk(5)
-                .reader(paymentFileReader())
-                .processor(processor)
-                .writer(paymentItemWriter())
-                //.listener(listener)
-                .build();
-
-
-        Job job = jobBuilderFactory.get("ETL-Load")
+        return jobBuilderFactory.get("ETL-Load")
                 .incrementer(new RunIdIncrementer())
-                .start(step)
+                .start(step())
                 .build();
-
-        return job;
-
     }
 
+    @Bean
+    public Step step(){
+        return stepBuilderFactory.get("ETL-file-load")
+                .<PaymentCsv, Payment>chunk(5)
+                .reader(reader())
+                .processor(processor())
+                .writer(writer)
+                //.listener(listener)
+                .build();
+    }
+
+    /*
     @Bean
     @StepScope
     public FlatFileItemReader<PaymentCsv> paymentFileReader() {
@@ -69,14 +96,14 @@ public class SpringBatchConfig {
                 .resource(new ClassPathResource("20221024_payments.csv"))
                 .linesToSkip(1)
                 .delimited()
-                .names(new String[] {"documentNumber","paymentDate","interest_amount","capital_amount","loan_id"})
+                .names("documentNumber","paymentDate","interest_amount","capital_amount","loan_id")
                 .targetType(PaymentCsv.class)
                 .build();
     }
 
 
     @Bean
-    public ItemWriter<Payment> paymentItemWriter() {
+    public ItemWriter<? super Payment> paymentItemWriter() {
         return new ItemWriter<Payment>() {
             @Override
             public void write(List<? extends Payment> items) throws Exception {
@@ -84,4 +111,6 @@ public class SpringBatchConfig {
             }
         };
     }
+
+     */
 }

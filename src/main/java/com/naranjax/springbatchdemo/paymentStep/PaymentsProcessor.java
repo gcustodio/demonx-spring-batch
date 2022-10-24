@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Date;
 
-@Component
 public class PaymentsProcessor implements ItemProcessor<PaymentCsv,Payment> {
 
     @Override
